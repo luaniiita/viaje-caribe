@@ -2,52 +2,60 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>🌴 Viaje Caribe PRO</title>
 
-<!-- ✅ Manifest -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2c5364">
+<!-- ✅ CLAVE PARA MÓVIL -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<!-- ✅ Firebase -->
+<title>🌴 Viaje Caribe</title>
+
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<!-- ✅ Chart -->
+<!-- Chart -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- ✅ Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <style>
 body{
-  font-family:'Segoe UI';
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI';
   background:#0f2027;
   margin:0;
 }
 
+/* ✅ CONTENER TIPO APP */
 .container{
-  max-width:500px;
+  max-width:480px;
   margin:auto;
-  background:#f9fafc;
+  background:#f4f6f9;
   min-height:100vh;
   padding:15px;
+  box-sizing:border-box;
 }
 
-h1{text-align:center;color:#0f2027;}
+/* ✅ TITULO */
+h1{
+  text-align:center;
+  font-size:24px;
+}
 
+/* ✅ TABS */
 .tabs{
   display:flex;
   background:white;
-  border-radius:15px;
-  margin-bottom:10px;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
 .tab{
   flex:1;
-  padding:12px;
+  padding:14px;
   text-align:center;
-  cursor:pointer;
+  font-size:18px;
 }
 
 .tab.active{
@@ -55,41 +63,49 @@ h1{text-align:center;color:#0f2027;}
   color:white;
 }
 
+/* ✅ SECCIONES */
 .section{display:none;}
 .section.active{display:block;}
 
+/* ✅ INPUTS GRANDES */
 input,select,textarea{
   width:100%;
-  padding:12px;
-  margin:5px 0;
-  border-radius:12px;
+  padding:14px;
+  margin:8px 0;
+  font-size:16px;
+  border-radius:14px;
   border:1px solid #ddd;
 }
 
+/* ✅ BOTONES GRANDES */
 button{
   width:100%;
-  padding:12px;
+  padding:15px;
+  font-size:16px;
   background:#2c5364;
   color:white;
   border:none;
-  border-radius:12px;
-}
-
-.card{
-  background:white;
-  padding:12px;
-  border-radius:15px;
-  margin:10px 0;
-}
-
-.delete{
-  background:red;
+  border-radius:14px;
   margin-top:10px;
 }
 
+/* ✅ TARJETAS PRO */
+.card{
+  background:white;
+  padding:12px;
+  border-radius:16px;
+  margin-top:10px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+}
+
+.delete{
+  background:#ff4d4d;
+}
+
+/* ✅ MAPA */
 #map{
-  height:300px;
-  border-radius:12px;
+  height:320px;
+  border-radius:16px;
 }
 </style>
 </head>
@@ -98,7 +114,7 @@ button{
 
 <div class="container">
 
-<h1>🌴 Luana & Daniel</h1>
+<h1>🌊 Luana & Daniel</h1>
 
 <div class="tabs">
   <div class="tab active" onclick="tab('resumen',this)">🏠</div>
@@ -109,8 +125,9 @@ button{
 
 <!-- RESUMEN -->
 <div id="resumen" class="section active">
-<h3>Total: <span id="totalEUR">0</span>€</h3>
+<h2>Total: <span id="totalEUR">0</span>€</h2>
 <p id="resultado"></p>
+
 <canvas id="graf"></canvas>
 </div>
 
@@ -137,17 +154,16 @@ button{
 <button onclick="add()">➕ Añadir gasto</button>
 
 <div id="lista"></div>
-
 </div>
 
 <!-- NOTAS -->
 <div id="notas" class="section">
-<textarea id="ideas" placeholder="Ideas del viaje..."></textarea>
+<textarea id="ideas" placeholder="📝 Ideas del viaje..."></textarea>
 </div>
 
 <!-- MAPA -->
 <div id="mapa" class="section">
-<p>Click para guardar sitio</p>
+<p>📍 Toca el mapa para guardar sitios</p>
 <div id="map"></div>
 </div>
 
@@ -155,7 +171,7 @@ button{
 
 <script>
 
-// 🔥 Firebase REAL (el tuyo)
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDnwz0jY9MsIEJFzlX-Pcai_jF4djHL_Kg",
   authDomain: "viaje---caribe-c1b70.firebaseapp.com",
@@ -166,7 +182,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // tabs
-function tab(id, el){
+function tab(id,el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -212,22 +228,18 @@ function render(){
 
   let total=0;
   let daniel=0;
-  let destinos={};
 
   datos.forEach(g=>{
     total+=g.eur;
 
     if(g.pagador==="Daniel") daniel+=g.eur;
 
-    destinos[g.destino]=(destinos[g.destino]||0)+g.eur;
-
     lista.innerHTML+=`
-      <div class="card">
-        <b>${g.pagador}</b> ${g.eur.toFixed(2)}€
-        <br>${g.concepto} (${g.destino})
-        <button class="delete" onclick="borrar('${g.id}')">Eliminar</button>
-      </div>
-    `;
+    <div class="card">
+      <b>${g.pagador}</b> ${g.eur.toFixed(2)}€
+      <br>${g.concepto}
+      <button class="delete" onclick="borrar('${g.id}')">Eliminar</button>
+    </div>`;
   });
 
   totalEUR.textContent = total.toFixed(2);
@@ -236,26 +248,22 @@ function render(){
   let balance=mitad-daniel;
 
   resultado.textContent = balance>0
-  ? `Daniel paga ${balance.toFixed(2)}€`
-  : `Luana paga ${Math.abs(balance).toFixed(2)}€`;
+    ? `Daniel paga ${balance.toFixed(2)}€`
+    : `Luana paga ${Math.abs(balance).toFixed(2)}€`;
 
   if(window.chart) chart.destroy();
 
   let ctx=document.getElementById("graf");
-
   window.chart=new Chart(ctx,{
     type:'doughnut',
     data:{
-      labels:Object.keys(destinos),
-      datasets:[{
-        data:Object.values(destinos),
-        backgroundColor:["#2c5364","#4ecdc4","#ff6b6b","#ffe66d","#1a535c"]
-      }]
+      labels:["Gastos"],
+      datasets:[{data:[total],backgroundColor:["#2c5364"]}]
     }
   });
 }
 
-// MAPA
+// mapa
 let map=L.map('map').setView([25,-80],4);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
