@@ -1,15 +1,9 @@
+
 {
   "name": "Viaje Caribe",
   "short_name": "Viaje",
-  "start_url": "./viaje.html",
+  "start_url": "/viaje-caribe/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2c5364",
-  "icons": [
-    {
-      "src": "icono.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    }
-  ]
+  "theme_color": "#2c5364"
 }
