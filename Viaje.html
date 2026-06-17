@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>🌴 Viaje Caribe PRO</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<!-- Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body{
+  font-family:'Segoe UI';
+  background:#0f2027;
+  margin:0;
+}
+
+.container{
+  max-width:500px;
+  margin:auto;
+  background:#f9fafc;
+  min-height:100vh;
+  padding:15px;
+  box-sizing:border-box;
+}
+
+h1{
+  text-align:center;
+  color:#0f2027;
+}
+
+/* Tabs estilo app */
+.tabs{
+  display:flex;
+  background:white;
+  border-radius:15px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  overflow:hidden;
+}
+.tab{
+  flex:1;
+  padding:12px;
+  text-align:center;
+  cursor:pointer;
+  transition:0.3s;
+}
+.tab.active{
+  background:#2c5364;
+  color:white;
+}
+
+/* Secciones */
+.section{
+  display:none;
+  animation:fade 0.3s;
+}
+.section.active{display:block;}
+
+@keyframes fade{
+  from{opacity:0; transform:translateY(5px);}
+  to{opacity:1;}
+}
+
+/* Inputs */
+input,select,textarea{
+  width:100%;
+  padding:12px;
+  margin:5px 0;
+  border-radius:12px;
+  border:1px solid #ddd;
+}
+
+/* Botones */
+button{
+  width:100%;
+  padding:12px;
+  background:#2c5364;
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-weight:bold;
+}
+
+.card{
+  background:white;
+  padding:12px;
+  border-radius:15px;
+  margin:10px 0;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+}
+
+.delete{
+  background:#ff4d4d;
+  margin-top:8px;
+}
+
+#map{
+  height:300px;
+  border-radius:15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🌴 Luana & Daniel</h1>
+
+<div class="tabs">
+  <div class="tab active" onclick="tab('resumen',this)">🏠</div>
+  <div class="tab" onclick="tab('gastos',this)">💰</div>
+  <div class="tab" onclick="tab('notas',this)">📝</div>
+  <div class="tab" onclick="tab('mapa',this)">🗺️</div>
+</div>
+
+<!-- RESUMEN -->
+<div id="resumen" class="section active">
+<h3>Total: <span id="totalEUR">0</span>€</h3>
+<p id="resultado"></p>
+<canvas id="graf"></canvas>
+</div>
+
+<!-- GASTOS -->
+<div id="gastos" class="section">
+
+<select id="pagador">
+<option>Luana</option>
+<option>Daniel</option>
+</select>
+
+<select id="destino">
+<option>Preparativos</option>
+<option>Miami</option>
+<option>Roatán</option>
+<option>Costa Maya</option>
+<option>Cozumel</option>
+<option>Ocean Cay</option>
+</select>
+
+<input id="concepto" placeholder="Concepto">
+<input id="precio" type="number" placeholder="Precio (€)">
+
+<button onclick="add()">➕ Añadir gasto</button>
+
+<div id="lista"></div>
+</div>
+
+<!-- NOTAS -->
+<div id="notas" class="section">
+<textarea id="ideas" placeholder="📝 Ideas del viaje..."></textarea>
+</div>
+
+<!-- MAPA -->
+<div id="mapa" class="section">
+<p>📍 Click para guardar sitio</p>
+<div id="map"></div>
+</div>
+
+</div>
+
+<script>
+
+// Firebase
+const firebaseConfig = {
+  apiKey: "AIza...",
+  authDomain: "viaje---caribe-c1b70.firebaseapp.com",
+  projectId: "viaje---caribe-c1b70"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function tab(id, el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+
+  if(id==="mapa"){
+    setTimeout(()=>map.invalidateSize(),200);
+  }
+}
+
+// añadir gasto
+function add(){
+  let precio = parseFloat(precioInput.value);
+  if(!precio) return;
+
+  db.collection("gastos").add({
+    pagador: pagador.value,
+    destino: destino.value,
+    concepto: concepto.value,
+    eur: precio
+  });
+
+  precioInput.value="";
+  concepto.value="";
+}
+
+// borrar
+function borrar(id){
+  db.collection("gastos").doc(id).delete();
+}
+
+let datos=[];
+
+// realtime
+db.collection("gastos").onSnapshot(snap=>{
+  datos=[];
+  snap.forEach(doc=>datos.push({id:doc.id,...doc.data()}));
+  render();
+});
+
+function render(){
+
+  let lista = document.getElementById("lista");
+  lista.innerHTML="";
+
+  let total=0;
+  let luana=0, daniel=0;
+  let destinos={};
+
+  datos.forEach(g=>{
+    total+=g.eur;
+
+    if(g.pagador==="Luana") luana+=g.eur;
+    else daniel+=g.eur;
+
+    destinos[g.destino]=(destinos[g.destino]||0)+g.eur;
+
+    lista.innerHTML+=`
+    <div class="card">
+      <b>${g.pagador}</b> ${g.eur.toFixed(2)}€
+      <br>${g.concepto} (${g.destino})
+      <button class="delete" onclick="borrar('${g.id}')">Eliminar</button>
+    </div>`;
+  });
+
+  totalEUR.textContent = total.toFixed(2);
+
+  let mitad=total/2;
+  let balance=mitad-daniel;
+
+  resultado.textContent = balance>0
+  ? `Daniel paga ${balance.toFixed(2)}€`
+  : `Luana paga ${Math.abs(balance).toFixed(2)}€`;
+
+  if(window.chart) chart.destroy();
+
+  let ctx=document.getElementById("graf");
+
+  window.chart=new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:Object.keys(destinos),
+      datasets:[{
+        data:Object.values(destinos),
+        backgroundColor:[
+          "#2c5364","#4ecdc4","#ff6b6b","#ffe66d","#1a535c","#3498db"
+        ]
+      }]
+    }
+  });
+}
+
+// MAPA
+let map=L.map('map').setView([25,-80],4);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+.addTo(map);
+
+map.on('click',e=>{
+  let nombre=prompt("Nombre del sitio:");
+  if(!nombre)return;
+
+  db.collection("lugares").add({
+    nombre,
+    lat:e.latlng.lat,
+    lng:e.latlng.lng
+  });
+});
+
+db.collection("lugares").onSnapshot(snap=>{
+  snap.forEach(doc=>{
+    let s=doc.data();
+    L.marker([s.lat,s.lng]).addTo(map).bindPopup(s.nombre);
+  });
+});
+
+// notas
+ideas.value=localStorage.getItem("ideas")||"";
+ideas.oninput=()=>localStorage.setItem("ideas",ideas.value);
+
+</script>
+
+</body>
+</html>
