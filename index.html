@@ -4,15 +4,19 @@
 <meta charset="UTF-8">
 <title>🌴 Viaje Caribe PRO</title>
 
-<!-- Firebase -->
+<!-- ✅ Manifest -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c5364">
+
+<!-- ✅ Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<!-- Chart -->
+<!-- ✅ Chart -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<!-- ✅ Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <style>
@@ -28,47 +32,32 @@ body{
   background:#f9fafc;
   min-height:100vh;
   padding:15px;
-  box-sizing:border-box;
 }
 
-h1{
-  text-align:center;
-  color:#0f2027;
-}
+h1{text-align:center;color:#0f2027;}
 
-/* Tabs estilo app */
 .tabs{
   display:flex;
   background:white;
   border-radius:15px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-  overflow:hidden;
+  margin-bottom:10px;
 }
+
 .tab{
   flex:1;
   padding:12px;
   text-align:center;
   cursor:pointer;
-  transition:0.3s;
 }
+
 .tab.active{
   background:#2c5364;
   color:white;
 }
 
-/* Secciones */
-.section{
-  display:none;
-  animation:fade 0.3s;
-}
+.section{display:none;}
 .section.active{display:block;}
 
-@keyframes fade{
-  from{opacity:0; transform:translateY(5px);}
-  to{opacity:1;}
-}
-
-/* Inputs */
 input,select,textarea{
   width:100%;
   padding:12px;
@@ -77,7 +66,6 @@ input,select,textarea{
   border:1px solid #ddd;
 }
 
-/* Botones */
 button{
   width:100%;
   padding:12px;
@@ -85,7 +73,6 @@ button{
   color:white;
   border:none;
   border-radius:12px;
-  font-weight:bold;
 }
 
 .card{
@@ -93,17 +80,16 @@ button{
   padding:12px;
   border-radius:15px;
   margin:10px 0;
-  box-shadow:0 5px 15px rgba(0,0,0,0.08);
 }
 
 .delete{
-  background:#ff4d4d;
-  margin-top:8px;
+  background:red;
+  margin-top:10px;
 }
 
 #map{
   height:300px;
-  border-radius:15px;
+  border-radius:12px;
 }
 </style>
 </head>
@@ -151,16 +137,17 @@ button{
 <button onclick="add()">➕ Añadir gasto</button>
 
 <div id="lista"></div>
+
 </div>
 
 <!-- NOTAS -->
 <div id="notas" class="section">
-<textarea id="ideas" placeholder="📝 Ideas del viaje..."></textarea>
+<textarea id="ideas" placeholder="Ideas del viaje..."></textarea>
 </div>
 
 <!-- MAPA -->
 <div id="mapa" class="section">
-<p>📍 Click para guardar sitio</p>
+<p>Click para guardar sitio</p>
 <div id="map"></div>
 </div>
 
@@ -168,9 +155,9 @@ button{
 
 <script>
 
-// Firebase
+// 🔥 Firebase REAL (el tuyo)
 const firebaseConfig = {
-  apiKey: "AIza...",
+  apiKey: "AIzaSyDnwz0jY9MsIEJFzlX-Pcai_jF4djHL_Kg",
   authDomain: "viaje---caribe-c1b70.firebaseapp.com",
   projectId: "viaje---caribe-c1b70"
 };
@@ -178,6 +165,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// tabs
 function tab(id, el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -191,7 +179,7 @@ function tab(id, el){
 
 // añadir gasto
 function add(){
-  let precio = parseFloat(precioInput.value);
+  let precio = parseFloat(document.getElementById('precio').value);
   if(!precio) return;
 
   db.collection("gastos").add({
@@ -201,7 +189,7 @@ function add(){
     eur: precio
   });
 
-  precioInput.value="";
+  precio.value="";
   concepto.value="";
 }
 
@@ -212,7 +200,6 @@ function borrar(id){
 
 let datos=[];
 
-// realtime
 db.collection("gastos").onSnapshot(snap=>{
   datos=[];
   snap.forEach(doc=>datos.push({id:doc.id,...doc.data()}));
@@ -220,28 +207,27 @@ db.collection("gastos").onSnapshot(snap=>{
 });
 
 function render(){
-
-  let lista = document.getElementById("lista");
+  let lista=document.getElementById("lista");
   lista.innerHTML="";
 
   let total=0;
-  let luana=0, daniel=0;
+  let daniel=0;
   let destinos={};
 
   datos.forEach(g=>{
     total+=g.eur;
 
-    if(g.pagador==="Luana") luana+=g.eur;
-    else daniel+=g.eur;
+    if(g.pagador==="Daniel") daniel+=g.eur;
 
     destinos[g.destino]=(destinos[g.destino]||0)+g.eur;
 
     lista.innerHTML+=`
-    <div class="card">
-      <b>${g.pagador}</b> ${g.eur.toFixed(2)}€
-      <br>${g.concepto} (${g.destino})
-      <button class="delete" onclick="borrar('${g.id}')">Eliminar</button>
-    </div>`;
+      <div class="card">
+        <b>${g.pagador}</b> ${g.eur.toFixed(2)}€
+        <br>${g.concepto} (${g.destino})
+        <button class="delete" onclick="borrar('${g.id}')">Eliminar</button>
+      </div>
+    `;
   });
 
   totalEUR.textContent = total.toFixed(2);
@@ -263,9 +249,7 @@ function render(){
       labels:Object.keys(destinos),
       datasets:[{
         data:Object.values(destinos),
-        backgroundColor:[
-          "#2c5364","#4ecdc4","#ff6b6b","#ffe66d","#1a535c","#3498db"
-        ]
+        backgroundColor:["#2c5364","#4ecdc4","#ff6b6b","#ffe66d","#1a535c"]
       }]
     }
   });
@@ -278,7 +262,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
 .addTo(map);
 
 map.on('click',e=>{
-  let nombre=prompt("Nombre del sitio:");
+  let nombre=prompt("Nombre del sitio");
   if(!nombre)return;
 
   db.collection("lugares").add({
